@@ -13,6 +13,7 @@ voices = {}
 voices_lock = Lock()
 ATTACK_TIME = 0.01  # 10ms fade-in
 RELEASE_TIME = 0.05  # 50ms fade-out
+WAVE_TABLE = [1, 0.5, 0.25, 0.8, 0.4]
 
 def midi_note_to_freq(note):
     return 440.0 * 2 ** ((note - 69) / 12.0)
@@ -66,7 +67,11 @@ def audio_callback(outdata, frames, time_info, status):
                     del voices[note]  # remove note after release
                     continue
 
-            buffer += np.sin(phases) * amp * 0.2
+            wave = 0
+            for harm in range(len(WAVE_TABLE)):
+                wave += WAVE_TABLE[harm] * np.sin(harm * phases)
+
+            buffer += wave * amp * 0.2
             v['phase'] = (phases[-1] + inc) % (2 * pi)
 
     outdata[:] = np.column_stack([buffer, buffer])
